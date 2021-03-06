@@ -22,6 +22,8 @@ class UrlServices:
         for saved_url in saved_urls:
             if url == saved_url[0]:
                 return True
+        
+        return False
 
     def get_domain(self, url):
         filter = re.fullmatch(r'^https?://(www.)?(\S*?)\/\S*$', url)

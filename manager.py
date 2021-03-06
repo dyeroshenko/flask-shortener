@@ -33,7 +33,7 @@ class Manager:
             return {
                     'status': 'OK! Url added',
                     'timestamp_added': timestamp, 
-                    'short_id': id,
+                    'short_id': short_id,
                     'url_domain': domain,
                     'full_url': full_url,
                     'visits': visits,
@@ -41,6 +41,58 @@ class Manager:
         
         else: 
             return {'status': 'Not OK! Invalid or duplicate URL'}
+
+    
+    def get_shortened_url(self, key):
+        unhashed_key = self.decode_shortened_key(key)
+
+        try: 
+            with self.database as cursor:
+                cursor.execute('SELECT hashed_id, timestamp_CET, full_url, domain, visits FROM urls WHERE id = ?', (unhashed_key[0],))
+                result = cursor.fetchone()
+        
+            return {
+                    'timestamp_added_cet': result[1],
+                    'short_id': result[2],
+                    'domain': result[3],
+                    'visits': result[4],
+                    }
+        except: 
+            return {'status': 'Not OK! Invalid ID'}
+
+
+    def show_all_urls(self):
+        raw_resut = self.get_full_data_from_db()
+        result = list()
+
+        for record in raw_resut:
+            result.append({
+                            'short_id': record[1], 
+                            'timestamp_added_cet': record[2], 
+                            'domain': record[3],
+                            'full_url': record[4],
+                            'visits': record[5]
+                        })
+
+        return result
+
+    def get_full_url_for_redirect(self, key):
+        key = self.decode_shortened_key(key)
+        self.increment_visit_count_for_url(key)
+        
+        with self.database as cursor:
+            cursor.execute('SELECT full_url FROM urls WHERE id = ?', (key[0],))
+            result = cursor.fetchone()
+
+        return result[0]
+
+    def get_full_data_from_db(self):
+        with self.database as cursor:
+            cursor.execute('SELECT id, hashed_id, timestamp_CET, domain, full_url, visits FROM urls ORDER BY id ASC')
+            result = cursor.fetchall()
+
+            return result
+
 
     def check_last_id_and_generate_new(self):
         with self.database as cursor:
@@ -50,42 +102,13 @@ class Manager:
 
         return last_id + 1
 
-    
-    def get_and_decode_shortened_url(self, hashed_id):
-        unhashed_id = self.hashing.decode_hash_key(hashed_id)
+    def decode_shortened_key(self, key):
+        id = self.hashing.decode_hash_key(key)
 
-        try: 
-            with self.database as cursor:
-                # cursor.execute('SELECT visits FROM url WHERE id = ?', (unhashed_id[0],))
-                # visits = int(cursor.fetchone()) + 1 
-                # cursor.execute('UPDATE urls SET visits = ? WHERE id ?', (visits, unhashed_id[0]))
-                cursor.execute('SELECT hashed_id, timestamp_CET, full_url, domain, visits FROM urls WHERE id = ?', (unhashed_id[0],))
+        return id
 
-                result = cursor.fetchone()
-        
-            return {
-                    'hashed_id': result[0],
-                    'timestamp_added_cet': result[1],
-                    'full_url': result[2],
-                    'domain': result[3],
-                    'visits': result[4],
-                    }
-        except: 
-            return {'status': 'Not OK! Invalid ID'}
-
-    def show_all_urls(self):
+    def increment_visit_count_for_url(self, key):
         with self.database as cursor:
-            cursor.execute('SELECT * FROM urls ORDER BY id ASC')
-            fetch = cursor.fetchall()
-        
-        result = list()
-
-        for record in fetch:
-            result.append({'id': record[0], 
-                        'hashed_id': record[1], 
-                        'timestamp_added_cet': record[2], 
-                        'full_url': record[3],
-                        'domain': record[4],
-                        'visits': record[5]})
-
-        return result
+            cursor.execute('SELECT visits FROM urls WHERE id = ?', (key[0],))
+            visits = int(cursor.fetchone()[0]) + 1 
+            cursor.execute('UPDATE urls SET visits = ? WHERE id = ?', (visits, key[0]))
