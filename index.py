@@ -50,6 +50,9 @@ def usage_dash():
                             result = result
                             )
 
+@app.route('/host', methods = ['GET'])
+def check_host()
+    return request.args
 
 if __name__ == '__main__':
     app.run(debug = True)
