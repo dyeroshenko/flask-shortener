@@ -36,7 +36,6 @@ class Manager:
                     'short_id': short_id,
                     'url_domain': domain,
                     'full_url': full_url,
-                    'visits': visits,
                     }
         
         else: 
@@ -52,8 +51,9 @@ class Manager:
                 result = cursor.fetchone()
         
             return {
+                    'short_id': result[0],
                     'timestamp_added_cet': result[1],
-                    'short_id': result[2],
+                    'full_url': result[2],
                     'domain': result[3],
                     'visits': result[4],
                     }

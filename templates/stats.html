@@ -1,18 +1,23 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<table>
-    <tr>
-        {% for title in titles %}
-        <th> {{ title }}</th>
+<div class="container">
+    <table>
+        <tr>
+            {% for title in titles %}
+            <th> {{ title }}</th>
+            {% endfor %}
+        </tr>
+        {% for record in result %}
+        <tr>
+            <td>{{ record[0] }}</td>
+            <td><a href="{{ url_for('redirect_to_original_page', hashed_id = record[1]) }}">{{ host + record[1] }}</a></td>
+            <td>{{ record[2] }}</td>
+            <td>{{ record[3] }}</td>
+            <td>{{ record[4] }}</td>
+            <td>{{ record[5] }}</td>
+        </tr>
         {% endfor %}
-    </tr>
-    {% for record in result %}
-    <tr>
-        {% for item in record %}
-        <td>{{ item }}</td>
-        {% endfor %}
-    </tr>
-    {% endfor %}
-</table>
+    </table>
+</div>
 {% endblock%}

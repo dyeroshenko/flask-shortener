@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, redirect, render_template
+from flask import Flask, request, jsonify, redirect, render_template, url_for
 from manager import Manager
 app = Flask(__name__)
 manager = Manager()
@@ -11,16 +11,20 @@ def redirect_to_original_page(hashed_id):
         url = manager.get_full_url_for_redirect(id)
         return redirect(url, code=302)
     except:
-        # Replace with 404 template 
-        return 'ID is invalid or not in our database yet'
-
+        return render_template(
+                                '404.html',
+                                title = '404 :(',
+                                content = 'ID is invalid or not in our database yet'
+                                )
 
 @app.route('/api/add_url', methods=['GET'])
 def add_url():
     if 'url' in request.args:
         url = request.args['url']
+        host = request.host_url
+        result = manager.verify_url_and_add_to_db(url)
 
-        return jsonify(manager.verify_url_and_add_to_db(url))
+        return jsonify({'shortened_url': f'{host + result["short_id"]}'}, result)
 
     else:
         return jsonify({'status': 'Not OK! No URL parameter'})
@@ -39,20 +43,26 @@ def get_url():
 def get_stats():
     return jsonify(manager.show_all_urls())
 
-@app.route('/usage', methods = ['GET'])
+@app.route('/app/usage', methods = ['GET'])
 def usage_dash():
-    titles = ('#', 'Short ID', 'Timestamp-added(CET)', 'Domain', 'Full URL', 'Visits')
-    result = manager.get_full_data_from_db()
+    host = request.host_url
+    titles = ('ID', 'Short URL', 'Timestamp(CET)', 'Domain', 'Full link', 'Visits')
+    data = manager.get_full_data_from_db()
 
     return render_template(
                             'stats.html',
                             titles = titles,
-                            result = result
+                            result = data,
+                            host = host
                             )
 
-@app.route('/host', methods = ['GET'])
-def check_host()
-    return request.args
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html',
+                            title = '404 :(',
+                            content = 'This API call / App page is not supported yet' 
+                            ), 404
+
 
 if __name__ == '__main__':
     app.run(debug = True)

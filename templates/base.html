@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <title>{{ the_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css')}}">
+    <link rel="icon" href="{{ url_for('static', filename='http-24px.svg')}}">
 </head>
 <body>
     {% block body %}
