@@ -1,3 +1,5 @@
+from typing import Dict, List, Tuple
+
 from url_services import UrlServices
 from hashing import Hashing
 from database import Database
@@ -8,7 +10,7 @@ class Manager:
         self.hashing = Hashing()
         self.database = Database('url.db')
 
-    def verify_url_and_add_to_db(self, url):
+    def verify_url_and_add_to_db(self, url: str) -> Dict[str, str]:
         if (self.url_services.check_is_valid_url(url) 
             and not self.url_services.check_if_duplicate(url)):
 
@@ -42,12 +44,12 @@ class Manager:
             return {'status': 'Not OK! Invalid or duplicate URL'}
 
     
-    def get_shortened_url(self, key):
+    def get_shortened_url(self, key: str) -> Dict[int, str]:
         unhashed_key = self.decode_shortened_key(key)
 
         try: 
             with self.database as cursor:
-                cursor.execute('SELECT hashed_id, timestamp_CET, full_url, domain, visits FROM urls WHERE id = ?', (unhashed_key[0],))
+                cursor.execute('SELECT hashed_id, timestamp_CET, full_url, domain, visits FROM urls WHERE id = ?', (unhashed_key,))
                 result = cursor.fetchone()
         
             return {
@@ -61,7 +63,7 @@ class Manager:
             return {'status': 'Not OK! Invalid ID'}
 
 
-    def show_all_urls(self):
+    def show_all_urls(self) -> List[Dict[str, str]]:
         raw_resut = self.get_full_data_from_db()
         result = list()
 
@@ -76,25 +78,24 @@ class Manager:
 
         return result
 
-    def get_full_url_for_redirect(self, key):
+    def get_full_url_for_redirect(self, key: str) -> str:
         key = self.decode_shortened_key(key)
         self.increment_visit_count_for_url(key)
         
         with self.database as cursor:
-            cursor.execute('SELECT full_url FROM urls WHERE id = ?', (key[0],))
+            cursor.execute('SELECT full_url FROM urls WHERE id = ?', (key,))
             result = cursor.fetchone()
 
         return result[0]
 
-    def get_full_data_from_db(self):
+    def get_full_data_from_db(self) -> List[Tuple[int, str]]:
         with self.database as cursor:
             cursor.execute('SELECT id, hashed_id, timestamp_CET, domain, full_url, visits FROM urls ORDER BY id ASC')
             result = cursor.fetchall()
 
             return result
 
-
-    def check_last_id_and_generate_new(self):
+    def check_last_id_and_generate_new(self) -> int:
         with self.database as cursor:
             _SQL = 'SELECT MAX(id) FROM urls'
             cursor.execute(_SQL)
@@ -102,13 +103,13 @@ class Manager:
 
         return last_id + 1
 
-    def decode_shortened_key(self, key):
+    def decode_shortened_key(self, key: str) -> int:
         id = self.hashing.decode_hash_key(key)
 
-        return id
+        return id[0]
 
-    def increment_visit_count_for_url(self, key):
+    def increment_visit_count_for_url(self, key: int) -> None:
         with self.database as cursor:
-            cursor.execute('SELECT visits FROM urls WHERE id = ?', (key[0],))
+            cursor.execute('SELECT visits FROM urls WHERE id = ?', (key,))
             visits = int(cursor.fetchone()[0]) + 1 
-            cursor.execute('UPDATE urls SET visits = ? WHERE id = ?', (visits, key[0]))
+            cursor.execute('UPDATE urls SET visits = ? WHERE id = ?', (visits, key))

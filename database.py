@@ -1,11 +1,11 @@
 import sqlite3
 
 class Database:
-    def __init__(self, db: str):
+    def __init__(self, db: str) -> None:
         self.db = db
         self.init_db()
 
-    def init_db(self):
+    def init_db(self) -> None:
         with self as cursor:
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS urls (
@@ -18,11 +18,11 @@ class Database:
                 )
             """)
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         self.connector = sqlite3.connect(self.db)
         self.cursor = self.connector.cursor()
         return self.cursor
 
-    def __exit__(self, exc_type, exc_val, exc_trace):
+    def __exit__(self, exc_type, exc_val, exc_trace) -> None:
         self.connector.commit()
         self.connector.close()

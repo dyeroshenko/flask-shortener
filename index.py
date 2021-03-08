@@ -1,10 +1,13 @@
 from flask import Flask, request, jsonify, redirect, render_template, url_for
+from typing import List, Dict, Tuple
+
 from manager import Manager
+
 app = Flask(__name__)
 manager = Manager()
 
 @app.route('/<hashed_id>', methods=['GET'])
-def redirect_to_original_page(hashed_id):
+def redirect_to_original_page(hashed_id: str) -> 'html':
     id = hashed_id
     
     try: 
@@ -18,7 +21,7 @@ def redirect_to_original_page(hashed_id):
                                 )
 
 @app.route('/api/add_url', methods=['GET'])
-def add_url():
+def add_url() -> Dict[str, str]:
     if 'url' in request.args:
         url = request.args['url']
         host = request.host_url
@@ -30,7 +33,7 @@ def add_url():
         return jsonify({'status': 'Not OK! No URL parameter'})
 
 @app.route('/api/get_url', methods=['GET'])
-def get_url():
+def get_url() -> Dict[int, str]:
     if 'id' in request.args:
         id = request.args['id']
         
@@ -40,11 +43,11 @@ def get_url():
         return jsonify({'status': 'Not OK! No URL id provided to read'})
 
 @app.route('/api/get_full_stats', methods=['GET'])
-def get_stats():
+def get_stats() -> List[Dict[str, str]]:
     return jsonify(manager.show_all_urls())
 
 @app.route('/app/usage', methods = ['GET'])
-def usage_dash():
+def usage_dash() -> 'html':
     host = request.host_url
     titles = ('ID', 'Short URL', 'Timestamp(CET)', 'Domain', 'Full link', 'Visits')
     data = manager.get_full_data_from_db()
@@ -57,11 +60,13 @@ def usage_dash():
                             )
 
 @app.errorhandler(404)
-def page_not_found(e):
+def page_not_found(e) -> 'html':
     return render_template('404.html',
                             title = '404 :(',
                             content = 'This API call / App page is not supported yet' 
                             ), 404
+
+
 
 
 if __name__ == '__main__':
